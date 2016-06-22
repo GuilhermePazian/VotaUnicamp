@@ -142,8 +142,9 @@ d3heatmap(mytbl[5:7],col=rev(brewer.pal(12,"Paired")),yaxis_width = 200)
 ```
 
 ```{r,echo=FALSE,message=FALSE}
-
-selectInput("curso","Escolha o curso desejado:", choices=seq(1,nrow(mytbl),1))
+slccursos=seq(1,nrow(mytbl),1)
+names(slccursos) = paste(mytbl[,1],mytbl[,2],mytbl[,3],sep = " - ")
+selectInput("curso","Escolha o curso desejado:", choices=slccursos)
 
 #textInput("curso","Escolha o curso desejado:",)
 ```

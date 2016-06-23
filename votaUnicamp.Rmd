@@ -195,3 +195,17 @@ colnames(ics) = c("lower", "upper")
 mytbl$p = p
 mytbl = cbind(mytbl, ics)
 ```
+
+```{r AlunosRegularesGraducao}
+setwd(choose.dir()) #escolha o diretório onde os arquivos do github foram clonados
+fvotosg = read.csv2("Matriculados_em_Cursos_Regulares_Graduação_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
+Total_de_Alunosg = ifelse(is.na(fvotosg[,3]),0,fvotosg[,3]) + ifelse(is.na(fvotosg[,4]),0,fvotosg[,4])
+alunosregularesGra = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosg))
+```
+
+```{r AlunosRegularesPosGraduacao}
+fvotosp = read.csv2("Matriculados_em_Cursos_Regulares_Pós_Graduação_Stricto_Sensu_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da Pós graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
+#Total_de_alunosp = ifelse(is.na(fvotosp[,3]),0,fvotosp[,3]) + ifelse(is.na(fvotosp[,4]),0,fvotosp[,4])
+#alunosregularesPos = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosp))
+```
+

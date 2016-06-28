@@ -92,15 +92,56 @@ html_to_text<-function(url){
 
 ```
 
+## Problema
+
+#### Breve histórico
+
+No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
+Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
+professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
+a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
+universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
+
+O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
+enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 
+recentemente, com a abertura do processo de impeachment de Dilma Rousseff, além das disputas 
+ideológicas ocorrentes nesse período, da exposição massiva opinativa decorrente da explosão   
+da utilização das redes sociais que causou um grande impacto na percepção dos brasileiros sobre
+a política e de outros assuntos também.
+
+Dado o breve resumo acima, no ano citado, houveram movimentações reinvindicando algumas das 
+pautas mencionadas acima, também é aventada a proposta da implementação do regime de cotas na 
+UNICAMP, além de se mobilizar contra um suposto golpe em relação ao processo de impeachment da 
+presidente e por reformas educaionais. Durante o primeiro semestre do ano supracitado, essas 
+mobilizações ganharam e entre os meses de maio e junho, as três categorias(alunos, professores e 
+funcionários) universitárias decretaram greve com essas pautas.
+
+Na UNICAMP, assim como na sociedade brasileira, há uma diversidade opinativa, ou seja, muitos de 
+seus funcionários, alunos e professores não concordaram com os motivos e métodos utilizados para 
+mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
+Computação Cientifíca(IMECC).
+
+#### Proposta
+
+Logo, como alternativa ao que consideram a não representatividade dos alunos por parte dos 
+orgãos responsáveis, a pesquisa do site  foi criada.
+
+A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
+pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
+é o da Graduação.
+
 ## Setup
 
 ```{r input, message=FALSE}
 #Sys.setlocale(locale='UTF-8')
 Sys.setlocale(category = "LC_TIME", locale="Portuguese_Brazil.1252")
-library(stringr)
-library(rvest)
-library(googleVis)
-library(leaflet)
+#alguns pacotes utilizados
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(rvest))
+suppressPackageStartupMessages(library(googleVis))
+suppressPackageStartupMessages(library(leaflet))
+suppressPackageStartupMessages(library(printr))
+#página da web ler
 page = read_html('http://votaunicamp.herokuapp.com/results/')
 tbl = html_table(page)[[2]]
 names(tbl)=c("Curso","Total","Sim","Abstenção","Não")
@@ -111,6 +152,7 @@ head(tbl)
 ## Formatação de Dados
 
 ```{r format}
+library(printr)
 mytbl = data.frame(codigo=as.integer(str_extract(tbl$Curso, "^\\d+")),
                    nivel=NA,
                    curso=gsub("^(\\d+) - (.*)$", "\\2", tbl$Curso),
@@ -128,18 +170,118 @@ mytbl$curso = gsub("(Mes|Dou).+ em (.*)$", "\\2", mytbl$curso)
 head(mytbl)
 ```
 
-## Gráfico de barras
+##Intervalo de Confiança
+
+```{r stats}
+p = with(mytbl, nao/(total))
+mes = qnorm(.975)*sqrt(1/(4*mytbl$total))
+ics = cbind(pmax(p-mes, 0), pmin(p+mes, 1))
+colnames(ics) = c("lower", "upper")
+mytbl$p = p
+mytbl = cbind(mytbl, ics)
+```
+
+
+
+```{r AlunosRegularesGraducao}
+setwd(choose.dir()) #escolha o diretório onde os arquivos do github foram clonados
+fvotosg = read.csv2("Matriculados_em_Cursos_Regulares_Graduação_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
+Total_de_Alunosg = ifelse(is.na(fvotosg[,3]),0,fvotosg[,3]) + ifelse(is.na(fvotosg[,4]),0,fvotosg[,4])
+alunosregularesGra = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosg))
+```
+
+```{r AlunosRegularesPosGraduacao}
+fvotosp = read.csv2("Matriculados_em_Cursos_Regulares_Pós_Graduação_Stricto_Sensu_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da Pós graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
+Total_de_alunosp = ifelse(is.na(fvotosp[,3]),0,fvotosp[,3]) + ifelse(is.na(fvotosp[,4]),0,fvotosp[,4])
+alunosregularesPos = data.frame(cbind(fvotosp[,c(1,2)],Total_de_alunosp))
+```
+
+Adição de algumas informações relacionadas aos cursos de graduação:
+
+```{r}
+suppressPackageStartupMessages(library(pracma))#usada para comparar strings
+suppressPackageStartupMessages(library(dplyr))#usada para filtrar o data.frame
+library(printr)
+mytblgrad=filter(mytbl,nivel=="Graduacao")#filtragem do data.frame
+mytblgrad$area=0#criação da coluna area
+mytblgrad$total_de_alunos_por_curso=0#criação do total de alunos por curso
+
+for (i in 1:nrow(mytblgrad)){
+  for(j in 1:nrow(alunosregularesGra)){
+    if(strcmp(as.character(mytblgrad[i,3]),
+              as.character(alunosregularesGra[j,1]))=='TRUE'){
+        mytblgrad[i,11]=alunosregularesGra[j,3]
+        mytblgrad[i,12]=as.character(alunosregularesGra[j,2])
+    }  
+  
+  }
+  
+}
+head(mytblgrad)
+```
+
+Tabela com dados referentes apenas a pós graduação:
+
+```{r}
+library(printr)
+mytblpos = filter(mytbl,nivel=="Mestrado" | nivel=="Doutorado")
+head(mytblpos)
+```
+
+
+##Estatísticas Descritivas
+
+
+### Estatística geral 
+
+#### Gráfico de barras
+
+Gráfico de barras correspondente ao total de votos respectivos a cada categoria,
+respostas positivas, negativas, abstencionistas relacionadas a implementação de 
+greve estudantil na Universidade Estadual de Campinas.
 
 ``` {r barras}
 barplot(c(sum(mytbl$sim),sum(mytbl$nao),sum(mytbl$abstencao)),legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylab = "Frequência", main =  "Total de Votos")
 
 ```
 
+
 ```{r }
 library(d3heatmap)
 library(RColorBrewer)
 d3heatmap(mytbl[5:7],col=rev(brewer.pal(12,"Paired")),yaxis_width = 200)
 ```
+
+
+###Estatísticas por qualificação
+
+Quantidade de cursos representados de acordo com nível de especialização, quantidade de pessoas 
+votantes respectivos a cada grau: 
+```{r}
+library(printr)
+
+Dados_nivel_estudo=data.frame(table(mytbl$nivel),c(sum(filter(mytbl,nivel=="Doutorado")$sim),
+sum(filter(mytbl,nivel=="Graduacao")$sim),
+sum(filter(mytbl,nivel=="Mestrado")$sim))
+,c(sum(filter(mytbl,nivel=="Doutorado")$nao),
+sum(filter(mytbl,nivel=="Graduacao")$nao),
+sum(filter(mytbl,nivel=="Mestrado")$nao))
+,c(sum(filter(mytbl,nivel=="Doutorado")$abst),
+sum(filter(mytbl,nivel=="Graduacao")$abst),
+sum(filter(mytbl,nivel=="Mestrado")$abst)),c(sum(filter(mytbl,nivel=="Doutorado")$total),
+sum(filter(mytbl,nivel=="Graduacao")$total),
+sum(filter(mytbl,nivel=="Mestrado")$total)))
+
+names(Dados_nivel_estudo)=c("Curso","Qtde de cursos representados","Sim","Nao","Abstencao","Total")
+
+Dados_nivel_estudo
+```
+
+### Estatísticas por área
+
+
+
+### Estatísticas por curso
 
 ```{r,echo=FALSE,message=FALSE}
 slccursos=seq(1,nrow(mytbl),1)
@@ -150,11 +292,15 @@ selectInput("curso","Escolha o curso desejado:", choices=slccursos)
 ```
 
 ```{r,echo=FALSE,message=FALSE}
-renderPlot(barplot(as.integer(mytbl[as.integer(input$curso),5:7]),main="Total de votos por curso",ylab="Frequência",legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylim=c(0,max(as.integer(mytbl[as.integer(input$curso),5:7])))))
-options=list(width="100%", height="100%")
+
+renderTable(mytbl[as.integer(input$curso),5:12])
+
 ```
 
-
+```{r,echo=FALSE,message=FALSE}
+renderPlot(barplot(as.integer(mytbl[as.integer(input$curso),5:7]),main=paste(mytbl[as.integer(input$curso),1],mytbl[as.integer(input$curso),2],mytbl[as.integer(input$curso),3],sep = " - "),ylab="Frequência",legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylim=c(0,max(as.integer(mytbl[as.integer(input$curso),5:7])))))
+options=list(width="100%", height="100%")
+```
 
 ## Gauge Plots
 
@@ -184,28 +330,3 @@ map = addTiles(map)
 map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 10,radius = 8)
 map
 ```
-
-## Intervalos de Confiança
-
-```{r stats}
-p = with(mytbl, nao/(total))
-mes = qnorm(.975)*sqrt(1/(4*mytbl$total))
-ics = cbind(pmax(p-mes, 0), pmin(p+mes, 1))
-colnames(ics) = c("lower", "upper")
-mytbl$p = p
-mytbl = cbind(mytbl, ics)
-```
-
-```{r AlunosRegularesGraducao}
-setwd(choose.dir()) #escolha o diretório onde os arquivos do github foram clonados
-fvotosg = read.csv2("Matriculados_em_Cursos_Regulares_Graduação_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
-Total_de_Alunosg = ifelse(is.na(fvotosg[,3]),0,fvotosg[,3]) + ifelse(is.na(fvotosg[,4]),0,fvotosg[,4])
-alunosregularesGra = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosg))
-```
-
-```{r AlunosRegularesPosGraduacao}
-fvotosp = read.csv2("Matriculados_em_Cursos_Regulares_Pós_Graduação_Stricto_Sensu_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da Pós graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
-#Total_de_alunosp = ifelse(is.na(fvotosp[,3]),0,fvotosp[,3]) + ifelse(is.na(fvotosp[,4]),0,fvotosp[,4])
-#alunosregularesPos = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosp))
-```
-

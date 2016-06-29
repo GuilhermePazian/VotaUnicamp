@@ -1,29 +1,88 @@
 ---
 title: "Vota Unicamp!"
-author: "Benilton S Carvalho"
+author: "Guilherme Pazian      RA:160323
+         Henrique Capatto      RA:146406
+         Matheus Gomes         RA:
+         Murilo Salgado Razoli RA:150987
+         Wellington Tanaka     RA:
+         "
 runtime: shiny
 output: html_document
 ---
 
+## Problema
+
+#### Breve histórico
+
+No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
+Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
+professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
+a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
+universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
+
+O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
+enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 
+recentemente, com a abertura do processo de impeachment de Dilma Rousseff, além das disputas 
+ideológicas ocorrentes nesse período, da exposição massiva opinativa decorrente da explosão   
+da utilização das redes sociais que causou um grande impacto na percepção dos brasileiros sobre
+a política e de outros assuntos também.
+
+Dado o breve resumo acima, no ano citado, houveram movimentações reinvindicando algumas das 
+pautas mencionadas acima, também é aventada a proposta da implementação do regime de cotas na 
+UNICAMP, além de se mobilizar contra um suposto golpe em relação ao processo de impeachment da 
+presidente e por reformas educaionais. Durante o primeiro semestre do ano supracitado, essas 
+mobilizações ganharam e entre os meses de maio e junho, as três categorias(alunos, professores e 
+funcionários) universitárias decretaram greve com essas pautas.
+
+Na UNICAMP, assim como na sociedade brasileira, há uma diversidade opinativa, ou seja, muitos de 
+seus funcionários, alunos e professores não concordaram com os motivos e métodos utilizados para 
+mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
+Computação Cientifíca(IMECC).
+
+#### Proposta
+
+Logo, como alternativa ao que consideram a não representatividade dos alunos por parte dos 
+orgãos responsáveis, a pesquisa do site  foi criada.
+
+A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
+pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
+é o da Graduação.
+
+## Setup
+
+### Pacotes utilizados 
+
+```{r instalacaoPacotesUtilizados,echo=FALSE,eval=FALSE}
+#troque eval para true para rodar o programa e instalar os pacotes
+install.packages(
+  'printr',
+  type = 'source',
+  repos = c('http://yihui.name/xran', 'http://cran.rstudio.com')
+)
+pacotes = c("tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer")
+install.packages(pacotes)
+
+
+### Funções auxiliares
 ```{r codigo_wordcloud}
 #Site que proveu a função abaixo
 #http://www.sthda.com/english/wiki/word-cloud-generator-in-r-one-killer-function-to-do-everything#-you-need
 
 #++++++++++++++++++++++++++++++++++
-# rquery.wordcloud() : Word cloud generator
+# rquery.wordcloud() : geradora da nuvem de palavras
 # - http://www.sthda.com
 #+++++++++++++++++++++++++++++++++++
-# x : character string (plain text, web url, txt file path)
-# type : specify whether x is a plain text, a web page url or a file path
-# lang : the language of the text
-# excludeWords : a vector of words to exclude from the text
-# textStemming : reduces words to their root form
-# colorPalette : the name of color palette taken from RColorBrewer package, 
-# or a color name, or a color code
-# min.freq : words with frequency below min.freq will not be plotted
-# max.words : Maximum number of words to be plotted. least frequent terms dropped
+# x : uma "string" de caracteres (plain text, web url, caminho pa um directório contendo o texto)
+# type : tipo especifico de x
+# lang : a lingua do texto
+# excludeWords : vetor com as palavras a serem retiradas do texto
+# textStemming : redução das palavras a forma radicial
+# colorPalette : nome da paleta de cores retirada do pacote RColorBrewer 
+# ou o nome de uma cor, ou um código de uma cor
+# min.freq : palavas com min.freq abaixo do especificaco não serão plotadas
+# max.words : Máximo de palavras a serem plotadas
 
-# value returned by the function : a list(tdm, freqTable)
+# valor retornado pela função : a list(tdm, freqTable)
 rquery.wordcloud <- function(x, type=c("text", "url", "file"), 
                              lang="english", excludeWords=NULL, 
                              textStemming=FALSE,  colorPalette="Dark2",
@@ -92,45 +151,17 @@ html_to_text<-function(url){
 
 ```
 
-## Problema
+```{r porcentagem}
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
 
-#### Breve histórico
+```
 
-No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
-Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
-professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
-a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
-universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
 
-O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
-enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 
-recentemente, com a abertura do processo de impeachment de Dilma Rousseff, além das disputas 
-ideológicas ocorrentes nesse período, da exposição massiva opinativa decorrente da explosão   
-da utilização das redes sociais que causou um grande impacto na percepção dos brasileiros sobre
-a política e de outros assuntos também.
 
-Dado o breve resumo acima, no ano citado, houveram movimentações reinvindicando algumas das 
-pautas mencionadas acima, também é aventada a proposta da implementação do regime de cotas na 
-UNICAMP, além de se mobilizar contra um suposto golpe em relação ao processo de impeachment da 
-presidente e por reformas educaionais. Durante o primeiro semestre do ano supracitado, essas 
-mobilizações ganharam e entre os meses de maio e junho, as três categorias(alunos, professores e 
-funcionários) universitárias decretaram greve com essas pautas.
 
-Na UNICAMP, assim como na sociedade brasileira, há uma diversidade opinativa, ou seja, muitos de 
-seus funcionários, alunos e professores não concordaram com os motivos e métodos utilizados para 
-mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
-Computação Cientifíca(IMECC).
 
-#### Proposta
-
-Logo, como alternativa ao que consideram a não representatividade dos alunos por parte dos 
-orgãos responsáveis, a pesquisa do site  foi criada.
-
-A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
-pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
-é o da Graduação.
-
-## Setup
 
 ```{r input, message=FALSE}
 #Sys.setlocale(locale='UTF-8')
@@ -143,6 +174,7 @@ suppressPackageStartupMessages(library(leaflet))
 suppressPackageStartupMessages(library(printr))
 #página da web ler
 page = read_html('http://votaunicamp.herokuapp.com/results/')
+prop_tbl = html_table(page)[[1]]
 tbl = html_table(page)[[2]]
 names(tbl)=c("Curso","Total","Sim","Abstenção","Não")
 tbl$Curso=repair_encoding(tbl$Curso)
@@ -175,9 +207,9 @@ head(mytbl)
 ```{r stats}
 p = with(mytbl, nao/(total))
 mes = qnorm(.975)*sqrt(1/(4*mytbl$total))
-ics = cbind(pmax(p-mes, 0), pmin(p+mes, 1))
+ics = cbind(round(pmax(p-mes, 0),3), round(pmin(p+mes, 1),3))
 colnames(ics) = c("lower", "upper")
-mytbl$p = p
+mytbl$p = round(p,3)
 mytbl = cbind(mytbl, ics)
 ```
 
@@ -209,7 +241,7 @@ mytblgrad$total_de_alunos_por_curso=0#criação do total de alunos por curso
 for (i in 1:nrow(mytblgrad)){
   for(j in 1:nrow(alunosregularesGra)){
     if(strcmp(as.character(mytblgrad[i,3]),
-              as.character(alunosregularesGra[j,1]))=='TRUE'){
+              as.character(alunosregularesGra[j,1]))=='TRUE'| (as.character(mytblgrad[i,3])=="Superior Tecn. Análise e Desenv.Sistemas" & as.character(alunosregularesGra[j,1])=="Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas")| (as.character(mytblgrad[i,3])=="Matemática/Física/Mat.Apl. e Comp" & as.character(alunosregularesGra[j,1])=="Matemática/Física/Matemática Aplicada e Computacional")){
         mytblgrad[i,11]=alunosregularesGra[j,3]
         mytblgrad[i,12]=as.character(alunosregularesGra[j,2])
     }  
@@ -234,6 +266,12 @@ head(mytblpos)
 
 ### Estatística geral 
 
+Proporção de votos:
+
+```{r prop_geral}
+prop_tbl
+```
+
 #### Gráfico de barras
 
 Gráfico de barras correspondente ao total de votos respectivos a cada categoria,
@@ -245,6 +283,10 @@ barplot(c(sum(mytbl$sim),sum(mytbl$nao),sum(mytbl$abstencao)),legend=colnames(my
 
 ```
 
+```{r tabela_geral}
+library(DT)
+datatable(data=mytbl,class = 'cell-border stripe')
+```
 
 ```{r }
 library(d3heatmap)
@@ -293,7 +335,7 @@ selectInput("curso","Escolha o curso desejado:", choices=slccursos)
 
 ```{r,echo=FALSE,message=FALSE}
 
-renderTable(mytbl[as.integer(input$curso),5:12])
+renderTable(mytbl[as.integer(input$curso),5:10])
 
 ```
 
@@ -327,6 +369,7 @@ Obter localizações (lat/lon) por meio do OpenStreet Maps:
 ends = read.table('institutos.tab', sep='\t', header=TRUE)
 map = leaflet()
 map = addTiles(map)
-map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 10,radius = 8)
+map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,opacity=1, fillOpacity = 0.5,radius = 30*w , col = "blue")
+map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,fillOpacity = 0.5,radius = 30*v , col = "red")
 map
 ```

@@ -1,4 +1,5 @@
 ---
+<<<<<<< HEAD
 title: "Projeto ME524 : Vota Unicamp!"
 author: 
 - Guilherme Pazian      RA:160323
@@ -11,6 +12,15 @@ date: "`r format(Sys.time(), '%d %B %Y')`"
 abstract: "A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
 pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
 é o da Graduação."
+=======
+title: "Vota Unicamp!"
+author: "Guilherme Pazian      RA:160323
+         Henrique Capatto      RA:146406
+         Matheus Gomes         RA:
+         Murilo Salgado Razoli RA:150987
+         Wellington Tanaka     RA:
+         "
+>>>>>>> origin/master
 runtime: shiny
 geometry: margin=1in
 fontfamily: mathpazo
@@ -47,9 +57,20 @@ seus funcionários, alunos e professores não concordaram com os motivos e méto
 mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
 Computação Cientifíca(IMECC).
 
+<<<<<<< HEAD
 Logo, como alternativa ao que consideram a não representatividade dos alunos por 
 parte dos orgãos responsáveis, a pesquisa através do site  foi criada.
 
+=======
+#### Proposta
+
+Logo, como alternativa ao que consideram a não representatividade dos alunos por parte dos 
+orgãos responsáveis, a pesquisa do site  foi criada.
+
+A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
+pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
+é o da Graduação.
+>>>>>>> origin/master
 
 ## Setup
 
@@ -64,7 +85,11 @@ install.packages(
 )
 pacotes = c("tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer")
 install.packages(pacotes)
+<<<<<<< HEAD
 ```
+=======
+
+>>>>>>> origin/master
 
 ### Funções auxiliares
 ```{r codigo_wordcloud}
@@ -158,8 +183,17 @@ html_to_text<-function(url){
 percent <- function(x, digits = 2, format = "f", ...) {
   paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
 }
+<<<<<<< HEAD
 
 ```
+=======
+
+```
+
+
+
+
+>>>>>>> origin/master
 
 
 ```{r input, message=FALSE}
@@ -174,7 +208,10 @@ suppressPackageStartupMessages(library(printr))
 #página da web ler
 page = read_html('http://votaunicamp.herokuapp.com/results/')
 prop_tbl = html_table(page)[[1]]
+<<<<<<< HEAD
 names(prop_tbl)=c("Total","Sim","Abstencao","Nao")
+=======
+>>>>>>> origin/master
 tbl = html_table(page)[[2]]
 names(tbl)=c("Curso","Total","Sim","Abstenção","Não")
 tbl$Curso=repair_encoding(tbl$Curso)
@@ -257,10 +294,17 @@ mytblgrad$instituto=0
 
 for (i in 1:nrow(mytblgrad)){
   for(j in 1:nrow(alunosregularesGra)){
+<<<<<<< HEAD
     if((strcmp(as.character(mytblgrad[i,3]),
               as.character(alunosregularesGra[j,1]))=='TRUE') | ((as.character(mytblgrad[i,3])=="Superior Tecn. Análise e Desenv.Sistemas" & as.character(alunosregularesGra[j,1])=="Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas")) | ((mytbl[i,1]==51) & (as.character(alunosregularesGra[j,1])=="Matemática/Física/Matemática Aplicada e Computacional"))){
         mytblgrad[i,12]=alunosregularesGra[j,3]
         mytblgrad[i,11]=as.character(alunosregularesGra[j,2])
+=======
+    if(strcmp(as.character(mytblgrad[i,3]),
+              as.character(alunosregularesGra[j,1]))=='TRUE'| (as.character(mytblgrad[i,3])=="Superior Tecn. Análise e Desenv.Sistemas" & as.character(alunosregularesGra[j,1])=="Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas")| (as.character(mytblgrad[i,3])=="Matemática/Física/Mat.Apl. e Comp" & as.character(alunosregularesGra[j,1])=="Matemática/Física/Matemática Aplicada e Computacional")){
+        mytblgrad[i,11]=alunosregularesGra[j,3]
+        mytblgrad[i,12]=as.character(alunosregularesGra[j,2])
+>>>>>>> origin/master
     }  
   
   }
@@ -296,7 +340,11 @@ head(mytblpos)
 
 Proporção de votos:
 
+<<<<<<< HEAD
 ```{r prop_geral,echo=FALSE}
+=======
+```{r prop_geral}
+>>>>>>> origin/master
 prop_tbl
 ```
 
@@ -322,6 +370,10 @@ suppressPackageStartupMessages(library(DT))
 datatable(data=mytbl)
 ```
 
+```{r tabela_geral}
+library(DT)
+datatable(data=mytbl,class = 'cell-border stripe')
+```
 
 Gráfico
 
@@ -478,6 +530,7 @@ Obter localizações (lat/lon) por meio do OpenStreet Maps:
 
 
 ```{r enderecos}
+<<<<<<< HEAD
 
 qtd = read.csv2(file.choose())
 
@@ -504,3 +557,12 @@ ggmap(myMap, extent = "device",ylab = "Latitude", xlab = "Longitude")+
   scale_colour_continuous(low = "red", high = "blue", space = "Lab", guide = "colorbar")
 
 ```
+=======
+ends = read.table('institutos.tab', sep='\t', header=TRUE)
+map = leaflet()
+map = addTiles(map)
+map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,opacity=1, fillOpacity = 0.5,radius = 30*w , col = "blue")
+map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,fillOpacity = 0.5,radius = 30*v , col = "red")
+map
+```
+>>>>>>> origin/master

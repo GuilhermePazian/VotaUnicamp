@@ -1,29 +1,91 @@
 ---
-title: "Vota Unicamp!"
-author: "Benilton S Carvalho"
+title: "Projeto ME524 : Vota Unicamp!"
+author: 
+- Guilherme Pazian      RA:160323
+- Henrique Capatto      RA:146406
+- Matheus Gomes         RA:156751
+- Murilo Salgado Razoli RA:150987
+- Wellington Tanaka     RA:093259
+affiliation: Universidade Estadual de Campinas
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
+pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
+é o da Graduação."
 runtime: shiny
+geometry: margin=1in
+fontfamily: mathpazo
+fontsize: 11pt
 output: html_document
 ---
 
+## Problema
+
+#### Breve histórico
+
+No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
+Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
+professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
+a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
+universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
+
+O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
+enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 
+recentemente, com a abertura do processo de impeachment de Dilma Rousseff, além das disputas 
+ideológicas ocorrentes nesse período, da exposição massiva opinativa decorrente da explosão   
+da utilização das redes sociais que causou um grande impacto na percepção dos brasileiros sobre
+a política e de outros assuntos também.
+
+Dado o breve resumo acima, no ano citado, houveram movimentações reinvindicando algumas das 
+pautas mencionadas acima, também é aventada a proposta da implementação do regime de cotas na 
+UNICAMP, além de se mobilizar contra um suposto golpe em relação ao processo de impeachment da 
+presidente e por reformas educaionais. Durante o primeiro semestre do ano supracitado, essas 
+mobilizações ganharam e entre os meses de maio e junho, as três categorias(alunos, professores e 
+funcionários) universitárias decretaram greve com essas pautas.
+
+Na UNICAMP, assim como na sociedade brasileira, há uma diversidade opinativa, ou seja, muitos de 
+seus funcionários, alunos e professores não concordaram com os motivos e métodos utilizados para 
+mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
+Computação Cientifíca(IMECC).
+
+Logo, como alternativa ao que consideram a não representatividade dos alunos por 
+parte dos orgãos responsáveis, a pesquisa através do site  foi criada.
+
+
+## Setup
+
+### Pacotes utilizados 
+
+```{r instalacaoPacotesUtilizados,echo=FALSE,eval=FALSE}
+#troque eval para true para rodar o programa e instalar os pacotes
+install.packages(
+  'printr',
+  type = 'source',
+  repos = c('http://yihui.name/xran', 'http://cran.rstudio.com')
+)
+pacotes = c("tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer")
+install.packages(pacotes)
+```
+
+### Funções auxiliares
 ```{r codigo_wordcloud}
 #Site que proveu a função abaixo
 #http://www.sthda.com/english/wiki/word-cloud-generator-in-r-one-killer-function-to-do-everything#-you-need
 
 #++++++++++++++++++++++++++++++++++
-# rquery.wordcloud() : Word cloud generator
+# rquery.wordcloud() : geradora da nuvem de palavras
 # - http://www.sthda.com
 #+++++++++++++++++++++++++++++++++++
-# x : character string (plain text, web url, txt file path)
-# type : specify whether x is a plain text, a web page url or a file path
-# lang : the language of the text
-# excludeWords : a vector of words to exclude from the text
-# textStemming : reduces words to their root form
-# colorPalette : the name of color palette taken from RColorBrewer package, 
-# or a color name, or a color code
-# min.freq : words with frequency below min.freq will not be plotted
-# max.words : Maximum number of words to be plotted. least frequent terms dropped
+# x : uma "string" de caracteres (plain text, web url, caminho pa um directório contendo o texto)
+# type : tipo especifico de x
+# lang : a lingua do texto
+# excludeWords : vetor com as palavras a serem retiradas do texto
+# textStemming : redução das palavras a forma radicial
+# colorPalette : nome da paleta de cores retirada do pacote RColorBrewer 
+# ou o nome de uma cor, ou um código de uma cor
+# min.freq : palavas com min.freq abaixo do especificaco não serão plotadas
+# max.words : Máximo de palavras a serem plotadas
 
-# value returned by the function : a list(tdm, freqTable)
+# valor retornado pela função : a list(tdm, freqTable)
 rquery.wordcloud <- function(x, type=c("text", "url", "file"), 
                              lang="english", excludeWords=NULL, 
                              textStemming=FALSE,  colorPalette="Dark2",
@@ -92,45 +154,13 @@ html_to_text<-function(url){
 
 ```
 
-## Problema
+```{r porcentagem}
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
 
-#### Breve histórico
+```
 
-No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
-Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
-professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
-a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
-universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
-
-O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
-enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 
-recentemente, com a abertura do processo de impeachment de Dilma Rousseff, além das disputas 
-ideológicas ocorrentes nesse período, da exposição massiva opinativa decorrente da explosão   
-da utilização das redes sociais que causou um grande impacto na percepção dos brasileiros sobre
-a política e de outros assuntos também.
-
-Dado o breve resumo acima, no ano citado, houveram movimentações reinvindicando algumas das 
-pautas mencionadas acima, também é aventada a proposta da implementação do regime de cotas na 
-UNICAMP, além de se mobilizar contra um suposto golpe em relação ao processo de impeachment da 
-presidente e por reformas educaionais. Durante o primeiro semestre do ano supracitado, essas 
-mobilizações ganharam e entre os meses de maio e junho, as três categorias(alunos, professores e 
-funcionários) universitárias decretaram greve com essas pautas.
-
-Na UNICAMP, assim como na sociedade brasileira, há uma diversidade opinativa, ou seja, muitos de 
-seus funcionários, alunos e professores não concordaram com os motivos e métodos utilizados para 
-mobilização da greve, como os incidentes ocorridos no Institiuto de Matemática, Estatística e 
-Computação Cientifíca(IMECC).
-
-#### Proposta
-
-Logo, como alternativa ao que consideram a não representatividade dos alunos por parte dos 
-orgãos responsáveis, a pesquisa do site  foi criada.
-
-A proposta de trabalho é de realizar análises estatísticas sobre os resultados obtidos pela 
-pesquisa efetuada. A variável de interesse são as respostas negativas. O grau que nos interessa  
-é o da Graduação.
-
-## Setup
 
 ```{r input, message=FALSE}
 #Sys.setlocale(locale='UTF-8')
@@ -143,6 +173,8 @@ suppressPackageStartupMessages(library(leaflet))
 suppressPackageStartupMessages(library(printr))
 #página da web ler
 page = read_html('http://votaunicamp.herokuapp.com/results/')
+prop_tbl = html_table(page)[[1]]
+names(prop_tbl)=c("Total","Sim","Abstencao","Nao")
 tbl = html_table(page)[[2]]
 names(tbl)=c("Curso","Total","Sim","Abstenção","Não")
 tbl$Curso=repair_encoding(tbl$Curso)
@@ -170,53 +202,81 @@ mytbl$curso = gsub("(Mes|Dou).+ em (.*)$", "\\2", mytbl$curso)
 head(mytbl)
 ```
 
-##Intervalo de Confiança
+####Intervalo de Confiança
 
 ```{r stats}
 p = with(mytbl, nao/(total))
 mes = qnorm(.975)*sqrt(1/(4*mytbl$total))
-ics = cbind(pmax(p-mes, 0), pmin(p+mes, 1))
+ics = cbind(round(pmax(p-mes, 0),3), round(pmin(p+mes, 1),3))
 colnames(ics) = c("lower", "upper")
-mytbl$p = p
+mytbl$p = round(p,3)
 mytbl = cbind(mytbl, ics)
 ```
 
+```{r AlunosRegularesGraducao,echo=FALSE}
 
+#Leitura de arquivos relacionados a informações sobre os cursos de graduação 
 
-```{r AlunosRegularesGraducao}
-setwd(choose.dir()) #escolha o diretório onde os arquivos do github foram clonados
-fvotosg = read.csv2("Matriculados_em_Cursos_Regulares_Graduação_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
-Total_de_Alunosg = ifelse(is.na(fvotosg[,3]),0,fvotosg[,3]) + ifelse(is.na(fvotosg[,4]),0,fvotosg[,4])
+setwd(choose.dir()) #escolha o diretório onde os arquivos do github foram 
+#clonados
+fvotosg = read.csv2("Matriculados_em_Cursos_Regulares_Graduação_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos 
+#regulares da graduação disponível em 
+#<http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADO
+#S>
+
+Total_de_Alunosg = ifelse(is.na(fvotosg[,3]),0,fvotosg[,3]) +ifelse(is.na(fvotosg[,4]),0,fvotosg[,4])
+
 alunosregularesGra = data.frame(cbind(fvotosg[,c(1,2)],Total_de_Alunosg))
 ```
 
-```{r AlunosRegularesPosGraduacao}
-fvotosp = read.csv2("Matriculados_em_Cursos_Regulares_Pós_Graduação_Stricto_Sensu_Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da Pós graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
+
+```{r AlunosRegularesPosGraduacao,echo=FALSE}
+
+#Leitura de arquivos relacionados a informações sobre os cursos de pós-graduação 
+
+fvotosp = read.csv2("Matriculados_em_Cursos_Regulares_Pós_Graduação_Stricto_Sensu
+                    _Por_Curso_e_Turno_2016.csv") #esse arquivo contém a quantidade de alunos regulares da Pós graduação disponível em <http://www.siarh.unicamp.br/indicadores/View.jsf?categoria=PUB_ACAD_MATRICULADOS>
 Total_de_alunosp = ifelse(is.na(fvotosp[,3]),0,fvotosp[,3]) + ifelse(is.na(fvotosp[,4]),0,fvotosp[,4])
 alunosregularesPos = data.frame(cbind(fvotosp[,c(1,2)],Total_de_alunosp))
+
+#
+codigos=na.omit(stack(read.csv2("CodigoCursosPorInstitutos.csv")))
+
 ```
 
 Adição de algumas informações relacionadas aos cursos de graduação:
 
-```{r}
+```{r,echo=FALSE}
 suppressPackageStartupMessages(library(pracma))#usada para comparar strings
 suppressPackageStartupMessages(library(dplyr))#usada para filtrar o data.frame
 library(printr)
-mytblgrad=filter(mytbl,nivel=="Graduacao")#filtragem do data.frame
+mytblgrad=filter(mytbl,nivel=="Graduacao" & codigo!=200)#filtragem do data.frame
 mytblgrad$area=0#criação da coluna area
 mytblgrad$total_de_alunos_por_curso=0#criação do total de alunos por curso
+mytblgrad$instituto=0
 
 for (i in 1:nrow(mytblgrad)){
   for(j in 1:nrow(alunosregularesGra)){
-    if(strcmp(as.character(mytblgrad[i,3]),
-              as.character(alunosregularesGra[j,1]))=='TRUE'){
-        mytblgrad[i,11]=alunosregularesGra[j,3]
-        mytblgrad[i,12]=as.character(alunosregularesGra[j,2])
+    if((strcmp(as.character(mytblgrad[i,3]),
+              as.character(alunosregularesGra[j,1]))=='TRUE') | ((as.character(mytblgrad[i,3])=="Superior Tecn. Análise e Desenv.Sistemas" & as.character(alunosregularesGra[j,1])=="Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas")) | ((mytbl[i,1]==51) & (as.character(alunosregularesGra[j,1])=="Matemática/Física/Matemática Aplicada e Computacional"))){
+        mytblgrad[i,12]=alunosregularesGra[j,3]
+        mytblgrad[i,11]=as.character(alunosregularesGra[j,2])
     }  
   
   }
   
 }
+
+
+for(i in 1:nrow(mytblgrad)){
+  for(j in 1:nrow(codigos)){
+    if(mytblgrad[i,1]==codigos[j,1])
+       mytblgrad[i,13]=as.character(codigos[j,2])
+      }
+}
+
+
+
 head(mytblgrad)
 ```
 
@@ -234,22 +294,41 @@ head(mytblpos)
 
 ### Estatística geral 
 
+Proporção de votos:
+
+```{r prop_geral,echo=FALSE}
+prop_tbl
+```
+
 #### Gráfico de barras
 
 Gráfico de barras correspondente ao total de votos respectivos a cada categoria,
 respostas positivas, negativas, abstencionistas relacionadas a implementação de 
 greve estudantil na Universidade Estadual de Campinas.
 
-``` {r barras}
-barplot(c(sum(mytbl$sim),sum(mytbl$nao),sum(mytbl$abstencao)),legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylab = "Frequência", main =  "Total de Votos")
+``` {r barras,echo=FALSE}
+barplot(c(sum(mytbl$sim),sum(mytbl$nao),sum(mytbl$abstencao)),
+        legend=colnames(mytbl[5:7])
+        ,col=c("gold1","darkorchid2","antiquewhite2")
+        ,ylab = "Frequência"
+        , main = "Total de Votos")
 
 ```
 
+Tabela geral com os dados obtidos
+
+```{r tabela_geral}
+suppressPackageStartupMessages(library(DT))
+datatable(data=mytbl)
+```
+
+
+Gráfico
 
 ```{r }
 library(d3heatmap)
 library(RColorBrewer)
-d3heatmap(mytbl[5:7],col=rev(brewer.pal(12,"Paired")),yaxis_width = 200)
+d3heatmap(mytbl[5:7],scale=c("Sim","nao","abstencao"),col=rev(brewer.pal(12,"Paired")),yaxis_width = 200)
 ```
 
 
@@ -277,9 +356,76 @@ names(Dados_nivel_estudo)=c("Curso","Qtde de cursos representados","Sim","Nao","
 Dados_nivel_estudo
 ```
 
-### Estatísticas por área
+### Estatísticas por área de estudo
+
+Dentro do ambiente universitário, existe uma hipótese levantada por muitos de que as ciências humanas e as artes tender a favorabilidade em se fazer greves e por outras pautas relacionadas ao pensamento de esquerda, enquanto as exatas e tecnológicas são tendenciosas ao pensamento mais conservador.
+
+Portanto, há uma "curiosidade" em testarmos a existência de discrepâncias entre
+as áreas do conhecimento. Na UNICAMP, a divisão entre elas se dá na forma de:
+Artes, Biológicas, Exatas, Humanas, Tecnológicas.
+
+Logo, como hipóteses tem-se:
+
+Hipótese nula: $H_0=$não há diferença entre de votos entre as áreas
+
+Hipótese alternativa: $H_1=$ há diferença entre as áreas
+
+```{r data_frames_areas,echo=FALSE}
+#filtragem da tabela mytblgrad para as referidas áreas
+area_de_estudo=read.csv2("QtdAlunosporArea.csv")
+
+Humanas=filter(mytblgrad,area=="Humanas")
+
+Tecnologicas=filter(mytblgrad,area=="Tecnológicas")
+
+Exatas=filter(mytblgrad,area=="Exatas")
+
+Biologicas=filter(mytblgrad,area=="Biológicas")
+
+Artes=filter(mytblgrad,area=="Artes")
+
+alpha=.05
+```
+
+Para tal feito, far-se-á um teste-quiquadrado para validação de uma hipótese. 
+O nível de significa será de $\alpha=$ `alpha`. Ou seja, se o p-valor do teste for menor que $\alpha=$, rejetar-se-á a hipótese nula.
+
+Uma suposição de que a proporção de votos é distribuida igualmente entre os votos sim, não e abstenção.
+
+#### Teste e seus resultados
+
+```{r teste_qui_prop}
+
+prop_humanas=c(sum(Humanas$sim),sum(Humanas$nao),sum(Humanas$abstencao))/sum(Humanas$total)
+
+prop_exatas=c(sum(Exatas$sim),sum(Exatas$nao),sum(Exatas$abstencao))/sum(Exatas$total)
+
+prop_artes=c(sum(Artes$sim),sum(Artes$nao),sum(Artes$abstencao))/sum(Artes$total)
+
+prop_tecnologicas=c(sum(Tecnologicas$sim),sum(Tecnologicas$nao),sum(Tecnologicas$abstencao))/sum(Tecnologicas$total)
+
+prop_biologicas=c(sum(Biologicas$sim),sum(Biologicas$nao),sum(Biologicas$abstencao))/sum(Biologicas$total)
 
 
+esp=rbind(rep(1/3,3),rep(1/3,3),rep(1/3,3),rep(1/3,3),rep(1/3,3))
+
+obs=rbind(prop_artes,prop_biologicas,prop_exatas,prop_humanas,prop_tecnologicas)
+
+teste=chisq.test(esp,obs)
+
+```
+
+### Estatísticas por instituto
+
+
+```{r estat_instituto}
+
+
+
+
+
+
+```
 
 ### Estatísticas por curso
 
@@ -293,7 +439,7 @@ selectInput("curso","Escolha o curso desejado:", choices=slccursos)
 
 ```{r,echo=FALSE,message=FALSE}
 
-renderTable(mytbl[as.integer(input$curso),5:12])
+renderTable(mytbl[as.integer(input$curso),5:10])
 
 ```
 
@@ -314,6 +460,13 @@ gauge = gvisGauge(tbl0[, c('curso', 'pnao')], 'curso', 'nao',
 plot(gauge)
 ```
 
+```{r renderGauge}
+
+renderGvis(gauge)
+
+```
+
+
 ## Obtenção de Dados Geográficos
 
 Obter localizações (lat/lon) por meio do OpenStreet Maps:
@@ -323,10 +476,31 @@ Obter localizações (lat/lon) por meio do OpenStreet Maps:
 - Olhar o endereço na barra de endereço após o zoom
 - Atualizar o data.frame abaixo com as informações
 
+
 ```{r enderecos}
-ends = read.table('institutos.tab', sep='\t', header=TRUE)
-map = leaflet()
-map = addTiles(map)
-map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 10,radius = 8)
-map
+
+qtd = read.csv2(file.choose())
+
+tabela.samp <- read.csv2(file.choose())
+
+v <- c(0.1,0.2,0.4,0.9,0.6,0.1,0.2,0.4,0.9,0.6,0.1,0.2,0.22,0.9,1,0.8,0.2,0.7,0.11)
+
+library(ggmap)
+library(rworldmap)
+library(ggplot2)
+
+data <- data.frame(lon=ends$lon, lat=ends$lat , Proporcao =v)
+
+myMap = get_map(location = c(lon = -47.0647206, lat = -22.8184393), zoom = 14) #Mapa da Unicamp
+
+#ggmap(myMap)+
+#geom_point(aes(x = lon, y = lat, size=0.4*sqrt(v)),
+#data = data, alpha = .5, color="red")+
+#scale_size(range=c(3,20), name="Proporção")
+
+ggmap(myMap, extent = "device",ylab = "Latitude", xlab = "Longitude")+
+ geom_point(aes(x = lon, y = lat, colour = Proporcao, size= Proporcao),
+ data = data, alpha = .5)+
+  scale_colour_continuous(low = "red", high = "blue", space = "Lab", guide = "colorbar")
+
 ```

@@ -2,7 +2,7 @@
 title: "Vota Unicamp!"
 author: "Guilherme Pazian      RA:160323
          Henrique Capatto      RA:146406
-         Matheus Gomes         RA:
+         Matheus Gomes         RA:156751
          Murilo Salgado Razoli RA:150987
          Wellington Tanaka     RA:
          "
@@ -61,7 +61,7 @@ install.packages(
 )
 pacotes = c("tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer")
 install.packages(pacotes)
-
+```
 
 ### Funções auxiliares
 ```{r codigo_wordcloud}
@@ -155,13 +155,7 @@ html_to_text<-function(url){
 percent <- function(x, digits = 2, format = "f", ...) {
   paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
 }
-
 ```
-
-
-
-
-
 
 ```{r input, message=FALSE}
 #Sys.setlocale(locale='UTF-8')
@@ -173,7 +167,7 @@ suppressPackageStartupMessages(library(googleVis))
 suppressPackageStartupMessages(library(leaflet))
 suppressPackageStartupMessages(library(printr))
 #página da web ler
-page = read_html('http://votaunicamp.herokuapp.com/results/')
+page = read_html('http://votaunicamp.herokuapp.com/prev_results/')
 prop_tbl = html_table(page)[[1]]
 tbl = html_table(page)[[2]]
 names(tbl)=c("Curso","Total","Sim","Abstenção","Não")
@@ -268,8 +262,28 @@ head(mytblpos)
 
 Proporção de votos:
 
-```{r prop_geral}
-prop_tbl
+```{r prop_geral, eval= FALSE}
+
+tabela.inst = read.csv2(file.choose())
+
+
+for(i in 1:length(table(tabela.inst$Sigla.Instituto))){
+  
+  for(j in 1:length(tabela.inst$Curso)){
+  
+  
+  if(as.character(tabela.inst$Curso)[i] == alunosregularesGra$Nome.Completo.do.Curso){
+    total.alunos = 
+  }
+    
+    
+  }
+}
+  
+
+
+
+
 ```
 
 #### Gráfico de barras
@@ -366,10 +380,27 @@ Obter localizações (lat/lon) por meio do OpenStreet Maps:
 - Atualizar o data.frame abaixo com as informações
 
 ```{r enderecos}
+
 ends = read.table('institutos.tab', sep='\t', header=TRUE)
-map = leaflet()
-map = addTiles(map)
-map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,opacity=1, fillOpacity = 0.5,radius = 30*w , col = "blue")
-map = addCircleMarkers(map, lat=ends$lat, lng=ends$lon, popup = ends$instituto, weight= 1,fillOpacity = 0.5,radius = 30*v , col = "red")
-map
+
+v <- c(0.1,0.2,0.4,0.9,0.6,0.1,0.2,0.4,0.9,0.6,0.1,0.2,0.22,0.9,1,0.8,0.2,0.7,0.11)
+
+library(ggmap)
+library(rworldmap)
+library(ggplot2)
+
+data <- data.frame(lon=ends$lon, lat=ends$lat , Proporcao =v)
+
+myMap = get_map(location = c(lon = -47.0647206, lat = -22.8184393), zoom = 14) #Mapa da Unicamp
+
+#ggmap(myMap)+
+#geom_point(aes(x = lon, y = lat, size=0.4*sqrt(v)),
+#data = data, alpha = .5, color="red")+
+#scale_size(range=c(3,20), name="Proporção")
+
+ggmap(myMap, extent = "device",ylab = "Latitude", xlab = "Longitude")+
+ geom_point(aes(x = lon, y = lat, colour = Proporcao, size= Proporcao),
+ data = data, alpha = .5)+
+  scale_colour_continuous(low = "red", high = "blue", space = "Lab", guide = "colorbar")
+
 ```

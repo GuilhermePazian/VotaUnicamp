@@ -4,7 +4,7 @@ author: "Guilherme Pazian      RA:160323
          Henrique Capatto      RA:146406
          Matheus Gomes         RA:156751
          Murilo Salgado Razoli RA:150987
-         Wellington Tanaka     RA:
+         Wellington Tanaka     RA:093259
          "
 runtime: shiny
 output: html_document
@@ -16,9 +16,9 @@ output: html_document
 
 No ano de 2016, foram anunciados cortes da ordem de quarenta milhões de reais nas despesas da  
 Universidade Estadual de Campinas(UNICAMP), nas quais aquelas impediriam contratações de novos 
-professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acresenta-se  
+professores, concessão de bolsas de estudos entre outras coisas. Neste contexto, acrescenta-se  
 a reinvidicação de isonomia salarial requerida pelos funcionários não-terceirizados da 
-universadade relacionadamente aos seus pares da Universidade de São Paulo(USP).
+universidade relacionadamente aos seus pares da Universidade de São Paulo(USP).
 
 O contexto político, social e econõmico em que o Brasil se situa na atualidade, com o 
 enfraquecimento da economia, tensões políticas advindas das épocas das Eleições de 2014 e, mais 

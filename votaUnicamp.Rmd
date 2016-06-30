@@ -66,7 +66,7 @@ install.packages(pacotes)
 ### Funções auxiliares
 ```{r codigo_wordcloud}
 #Site que proveu a função abaixo
-#http://www.sthda.com/english/wiki/word-cloud-generator-in-r-one-killer-function-to-do-everything#-you-need
+#http://www.sthda.com/english/wiki  /word-cloud-generator-in-r-one-killer-function-to-do-everything#-you-need
 
 #++++++++++++++++++++++++++++++++++
 # rquery.wordcloud() : geradora da nuvem de palavras

@@ -65,7 +65,7 @@ install.packages(
   type = 'source',
   repos = c('http://yihui.name/xran', 'http://cran.rstudio.com')
 )
-pacotes = c("tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer", "ggrepel", "ggplot2", "ggmap")
+pacotes = c("shiny","DT","tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer", "ggrepel", "ggplot2", "ggmap")
 install.packages(pacotes)
 ```
 
@@ -166,7 +166,7 @@ percent <- function(x, digits = 2, format = "f", ...) {
 }
 ```
 
-```{r input, message=FALSE, echo = FALSE}
+```{r input, message=FALSE, echo = FALSE,message=FALSE}
 #Sys.setlocale(locale='UTF-8')
 Sys.setlocale(category = "LC_TIME", locale="Portuguese_Brazil.1252")
 #alguns pacotes utilizados
@@ -214,7 +214,7 @@ mytbl$curso = gsub("(Mes|Dou).+ em (.*)$", "\\2", mytbl$curso)
 p = with(mytbl, nao/(total))
 mes = qnorm(.975)*sqrt(1/(4*mytbl$total))
 ics = cbind(round(pmax(p-mes, 0),3), round(pmin(p+mes, 1),3))
-colnames(ics) = c("lower", "upper")
+colnames(ics) = c("Limite Inferior IC", "Limite Superior IC")
 mytbl$p = round(p,3)
 mytbl = cbind(mytbl, ics)
 ```
@@ -319,35 +319,62 @@ names(Dados_nivel_estudo)=c("Curso","Qtde de cursos representados","Sim","Nao","
 Dados_nivel_estudo
 ```
 
-
-```{r Institutos, echo = FALSE}
 ### Estatísticas por área
 
 ## Estatísticas por Instituto
 
+```{r Institutos, echo = FALSE}
 
 cursosPorInstituto = data.frame(read.csv2("CodigoCursosPorInstitutos.csv",header = TRUE))
 #head(cursosPorInstituto)
 totalInstituto = as.integer(rep(0,ncol(cursosPorInstituto)))
 naoInstituto = as.integer(rep(0,ncol(cursosPorInstituto)))
+nuloInstituto = as.integer(rep(0,ncol(cursosPorInstituto)))
 for(i in 1:ncol(cursosPorInstituto)){
   j=1
   A=FALSE
   while(A==FALSE & j<=nrow(cursosPorInstituto)){
   naoInstituto[i] = ifelse(length(filter(mytblgrad,codigo==cursosPorInstituto[j,i])$nao)!=0,filter(mytblgrad,codigo==cursosPorInstituto[j,i])$nao,0) + naoInstituto[i]
 
-totalInstituto[i] = ifelse(length(filter(mytblgrad,codigo==cursosPorInstituto[j,i])$total)!=0,filter(mytblgrad,codigo==cursosPorInstituto[j,i])$total,0) + totalInstituto[i]
-  
+  totalInstituto[i] = ifelse(length(filter(mytblgrad,codigo==cursosPorInstituto[j,i])$total)!=0,filter(mytblgrad,codigo==cursosPorInstituto[j,i])$total,0) + totalInstituto[i]
+  nuloInstituto[i] = ifelse(length(filter(mytblgrad, codigo == cursosPorInstituto[j,i])$abstencao)!=0,filter(mytblgrad,codigo == cursosPorInstituto[j,i])$abstencao,0) + nuloInstituto[i]
   j=j+1
   A=is.na(cursosPorInstituto[j,i])
   }
 }
 propInstituto = naoInstituto/totalInstituto
 
-data.Instituto = data.frame(cbind(colnames(cursosPorInstituto),naoInstituto,totalInstituto,round(propInstituto,3)))
+data.Instituto = data.frame(cbind(colnames(cursosPorInstituto),naoInstituto,totalInstituto,nuloInstituto,round(propInstituto,3)))
 
 ```
 
+```{r agregandoQuantidadeAlunosInstitutos,echo = FALSE}
+data.InstitutosRei = data.Instituto[-25,] #retirada da reitoria (profis != graduação)
+alunosMatricPorInst = data.frame(read.csv2('QtdAlunosporInstituto.csv'))
+regularesGrad = rep(0,length(data.InstitutosRei$V1))
+for(i in 1:length(data.InstitutosRei$V1)){
+regularesGrad[i] = ifelse(length(filter(alunosMatricPorInst,SIGLA == as.character(data.InstitutosRei[i,1]))$N_de_alunos)!=0,filter(alunosMatricPorInst,SIGLA == as.character(data.InstitutosRei[i,1]))$N_de_alunos,0)
+}
+
+dadosporInstituto = data.frame(cbind(data.InstitutosRei,regularesGrad))
+#colnames(dadosporInstituto) = c("Instituto","Não","total","abstenção","proporção de Nãos","Alunos Regulares")    #alguem pode ajudar aqui??? porque não funciona?
+library(DT)
+datatable(data=dadosporInstituto,class = 'cell-border stripe')
+
+
+```
+
+```{r GraficoDeDispersão,echo = FALSE}
+#não sei porque o grafico não está sendo plotado, alguem manja? 
+library(ggplot2)
+p1 = as.numeric(dadosporInstituto$naoInstituto)/as.numeric(dadosporInstituto$totalInstituto)
+p2 = as.numeric(dadosporInstituto$totalInstituto)/as.numeric(dadosporInstituto$regularesGrad)
+siglas = as.character(dadosporInstituto$V1)
+ggplot(dadosporInstituto, aes(x=p2, y=p1)) +
+  geom_point() +
+  geom_text(label=siglas) + labs(x = "Proporção de votos em relação ao total de alunos regularmente Matriculados do instituto") + labs(y = "proporção de Votos Contra a greve")
+
+```
 
 ### Estatísticas por curso
 

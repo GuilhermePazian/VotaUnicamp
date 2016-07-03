@@ -381,9 +381,11 @@ p_valor=chisq.test(obs,p=esp)$p.value
 
 ```
 
-Temos que o p-valor é aproximadamente de: `r p_valor` 
+Temos que o p-valor é aproximadamente de: `r round(p_valor,3)` 
 
 ## Estatísticas por Instituto
+
+De maneira a identificar melhor a diversidade de opinião dentro do ambiente universitário, podemos também, fazer uma análise das proporções de votos contra a greve de alunos do mesmo instituto. Podemos também analisar a representatividade dos dados apresentados aqui.
 
 ```{r Institutos, echo = FALSE}
 
@@ -411,7 +413,7 @@ data.Instituto = data.frame(cbind(colnames(cursosPorInstituto),naoInstituto,tota
 ```
 
 ```{r agregandoQuantidadeAlunosInstitutos,echo = FALSE}
-data.InstitutosRei = data.Instituto[-25,] #retirada da reitoria (profis != graduação)
+data.InstitutosRei = data.frame(data.Instituto[-25,]) #retirada da reitoria (profis != graduação)
 alunosMatricPorInst = data.frame(read.csv2('QtdAlunosporInstituto.csv'))
 regularesGrad = rep(0,length(data.InstitutosRei$V1))
 for(i in 1:length(data.InstitutosRei$V1)){
@@ -419,11 +421,14 @@ regularesGrad[i] = ifelse(length(filter(alunosMatricPorInst,SIGLA == as.characte
 }
 
 dadosporInstituto = data.frame(cbind(data.InstitutosRei,regularesGrad))
-head(dadosporInstituto)
-LIIC = as.numeric(dadosporInstituto[,5])- qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1)
-LSIC = as.numeric(dadosporInstituto[,5]) + qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1)
-dadosporInstituto2 = data.frame(cbind(dadosporInstituto,LIIC,LSIC))
+#head(dadosporInstituto)
+str(dadosporInstituto)
+LIIC = max(0,as.numeric(dadosporInstituto[,5])- qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1))
+LSIC = min(1,as.numeric(dadosporInstituto[,5]) + qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1))
+dadosporInstituto2 = data.frame(cbind(dadosporInstituto,round(LIIC,3),round(LSIC,3)))
 ```
+  
+O gráfico abaixo apresenta uma relação da **proporção de votos contra a greve** com a **proporção de alunos regularmente matriculados que votaram no site "VotaUnicamp"**. Este a seguinte interpretação: Quanto mais alto está o ponto (ou sigla) referente ao instituto, maior é a proporção de alunos que votaram contra a greve no site **VotaUnicamp** e quanto mais este mesmo ponto (sigla) está à direita do gráfico maior a porcentagem de alunos, regularmente matriculados em cursos oferecidos no instituto em questão, que votaram no site **VotaUnicamp**.
 
 ```{r GraficoDeDispersão,echo = FALSE}
 #não sei porque o grafico não está sendo plotado, alguem manja? 
@@ -435,12 +440,14 @@ ggplot(dadosporInstituto2, aes(x=p2, y=p1)) +
   geom_point() +
   geom_text(label=siglas) + labs(x = "Proporção de votos em relação ao total de alunos regularmente Matriculados do instituto") + labs(y = "proporção de Votos Contra a greve")
 ```
+  
+O gráfico abaixo é uma representação gráfica dos intervalos de confiança obtidos a partir dos dados referentes aos institutos. O ponto central é a proporção de votos contra a greve e as linhas horizontais representam o limite inferior e o limite superior de cada intervalo de confiança. Pode-se interpretar o grafico da seguinte maneira: Quanto mais alto está o ponto central referente ao instituto, maior a proporção de votos contra a greve no instituto, e quanto maior a distância entre as linhas horizontais (superior e inferior) menor a precisão da nossa estimativa. Os intervalos de confiança abaixo, foram confeccionados a partir de um nível de significância de 95%, ou seja, considerando que os alunos que votaram no site VotaUnicamp representam uma amostra aleatoria do total de alunos do instituto, então se tomassemos uma quantidade suficientemente grande de amostras aleatórias e produzirmos Intervalos de confiança (com 95% de significância) com estas, teríamos então, que em média, 95% dos Intervalos de confiança irão conter a verdadeira proporção de interesse (a populacional, referente a todos os alunos do curso).
 
 ```{r representaçãoGraficaDosICS,echo=FALSE,eval=TRUE}
 library(ggplot2)
-graf<- ggplot(dadosporInstituto2, aes(x = as.numeric(dadosporInstituto2[,1]), y = dadosporInstituto2[,5])) +
+graf<- ggplot(dadosporInstituto2, aes(x = as.numeric(dadosporInstituto2[,1]), y = as.character(dadosporInstituto2[,5]))) +
   geom_point(size = 1) +
-  geom_errorbar(aes(ymax = dadosporInstituto2[,8], ymin = dadosporInstituto2[,7]))
+  geom_errorbar(aes(ymax = dadosporInstituto2[,8], ymin = dadosporInstituto2[,7])) + xlab("Proporção de Votos Contra a Greve") + ylab("Institutos")
 graf
 ```
 
@@ -449,18 +456,22 @@ tamanhoIC = 0.1
 N = (1/4) *(2*qnorm(0.975)/tamanhoIC)^2
 Nnecessario = ceiling(N)
 ```
-
+  
 ```{r tabelaAmostraNecessaria,echo=FALSE}
 tabelaNnecessario = data.frame(Instituto = dadosporInstituto2[,1],Total_Instituto = dadosporInstituto2[,3],Tamanho_de_Amostra_Necessario = Nnecessario,votosFaltantes = (Nnecessario - as.numeric(dadosporInstituto2[,3])))
 ```
-
+  
+As colunas da tabela abaixo representam respectivamente: "Sigla do instituto", "quantidade de votos contra a greve", "quantidade total de votos","quantidade de abstenções","proporção de votos contra a greve","quantidade de alunos regularmente matriculados em cursos oferecidos no instituto", "o limite inferior do Intervalo de confiança com 95% de significancia" e "o limite superior do Intervalo de confiança com 95% de significancia".
+  
 ```{r tabelaInstituto,echo=FALSE}
 library(DT)
 datatable(data=dadosporInstituto2,class = 'cell-border stripe')
 ```
-
+  
+  
 A fim de conseguirmos Intervalos de confiança para proporção de votos "não" por Instituto de tamanho `r tamanhoIC` com coeficientes de confiança de 95%, devemos ter `r Nnecessario` votos para cada Instituto. A tabela abaixo mostra o total de votos de cada Instituto, a quantidade mínima nescessária para atingir o IC desejado e a quantidade de votos faltantes para atingir essa quantidade para cada Instituto.
-
+  
+  
 ```{r tabela,echo=FALSE}
 library(DT)
 datatable(data=tabelaNnecessario,class = 'cell-border stripe')

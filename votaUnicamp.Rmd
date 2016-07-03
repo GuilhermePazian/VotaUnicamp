@@ -64,7 +64,7 @@ install.packages(
   type = 'source',
   repos = c('http://yihui.name/xran', 'http://cran.rstudio.com')
 )
-pacotes = c("shiny","DT","tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer", "ggrepel", "ggplot2", "ggmap")
+pacotes = c("shiny","DT","tm","SnowballC","wordcloud","RColorBrewer","RCurl","XML","stringr","rvest","googleVis","leaflet","pracma","dplyr","d3heatmap","RColorBrewer", "ggrepel", "ggplot2", "ggmap","boot")
 install.packages(pacotes)
 ```
 
@@ -159,15 +159,9 @@ html_to_text<-function(url){
 
 ```
 
-```{r porcentagem, echo = FALSE}
-percent <- function(x, digits = 2, format = "f", ...) {
-  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
-}
-```
+```{r input, message=FALSE, echo = FALSE}
+Sys.setlocale(locale='UTF-8')
 
-```{r input, message=FALSE, echo = FALSE,message=FALSE}
-#Sys.setlocale(locale='UTF-8')
-Sys.setlocale(category = "LC_TIME", locale="Portuguese_Brazil.1252")
 #alguns pacotes utilizados
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(rvest))
@@ -269,13 +263,16 @@ for(i in 1:nrow(mytblgrad)){
 
 ##Estatísticas Descritivas
 
-#### Gráfico de barras
+#### Tabela de proporção de votos
 
 
 ```{r tabela_prop_geral, echo = FALSE, message = FALSE}
 library(printr)
 prop_tbl
 ```
+
+
+#### Gráfico de barras
 
 Gráfico de barras correspondente ao total de votos respectivos a cada categoria,
 respostas positivas, negativas, abstencionistas relacionadas a implementação de 
@@ -315,8 +312,20 @@ sum(filter(mytbl,nivel=="Mestrado")$total)))
 
 names(Dados_nivel_estudo)=c("Curso","Qtde de cursos representados","Sim","Nao","Abstencao","Total")
 
+prop_dou_nao = round(as.integer(Dados_nivel_estudo[1,4])/as.integer(Dados_nivel_estudo[1,6]),2)
+
+prop_grad_nao = round(as.integer(Dados_nivel_estudo[2,4])/as.integer(Dados_nivel_estudo[2,6]),2)
+
+
+prop_mes_nao = round(as.integer(Dados_nivel_estudo[3,4])/as.integer(Dados_nivel_estudo[3,6]),2)
+
 Dados_nivel_estudo
 ```
+
+
+Vemos que o número de votantes é majoritariamente contra greve que ocorre na 
+Unicamp pois nos três níveis os números absolutos de votos negativos são maiores 
+em relação ao total podendo ser visto em relação as proporções respectivas a graduação, mestrado e doutorado: `r prop_grad_nao`, `r prop_mes_nao` e `r prop_dou_nao`. 
 
 ### Estatísticas por área
 
@@ -381,7 +390,7 @@ p_valor=chisq.test(obs,p=esp)$p.value
 
 ```
 
-Temos que o p-valor é aproximadamente de: `r round(p_valor,3)` 
+Temos que o p-valor é aproximadamente de: `r round(p_valor,3)`.
 
 ## Estatísticas por Instituto
 
@@ -409,34 +418,41 @@ for(i in 1:ncol(cursosPorInstituto)){
 propInstituto = naoInstituto/totalInstituto
 
 data.Instituto = data.frame(cbind(colnames(cursosPorInstituto),naoInstituto,totalInstituto,nuloInstituto,round(propInstituto,3)))
-
 ```
 
 ```{r agregandoQuantidadeAlunosInstitutos,echo = FALSE}
 data.InstitutosRei = data.frame(data.Instituto[-25,]) #retirada da reitoria (profis != graduação)
 alunosMatricPorInst = data.frame(read.csv2('QtdAlunosporInstituto.csv'))
-regularesGrad = rep(0,length(data.InstitutosRei$V1))
-for(i in 1:length(data.InstitutosRei$V1)){
+regularesGrad = rep(0,length(data.InstitutosRei[,1]))
+for(i in 1:length(data.InstitutosRei[,1])){
 regularesGrad[i] = ifelse(length(filter(alunosMatricPorInst,SIGLA == as.character(data.InstitutosRei[i,1]))$N_de_alunos)!=0,filter(alunosMatricPorInst,SIGLA == as.character(data.InstitutosRei[i,1]))$N_de_alunos,0)
 }
 
 dadosporInstituto = data.frame(cbind(data.InstitutosRei,regularesGrad))
 #head(dadosporInstituto)
 str(dadosporInstituto)
-LIIC = max(0,as.numeric(dadosporInstituto[,5])- qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1))
-LSIC = min(1,as.numeric(dadosporInstituto[,5]) + qnorm(.975) * (sqrt(4*as.numeric(dadosporInstituto[,3])))^(-1))
-dadosporInstituto2 = data.frame(cbind(dadosporInstituto,round(LIIC,3),round(LSIC,3)))
+LIIC = as.numeric(as.character(dadosporInstituto[,5])) - qnorm(.975) * (sqrt((1 - (as.numeric(as.character(dadosporInstituto[,3])) / as.numeric(as.character(dadosporInstituto[,6])))) / (4*(as.numeric(as.character(dadosporInstituto[,3])))-1)))
+
+ICinf = ifelse(LIIC < 0 | LIIC=="NaN" , 0 , LIIC)
+
+LSIC = as.numeric(as.character(dadosporInstituto[,5])) + qnorm(.975) * (sqrt((1 - (as.numeric(as.character(dadosporInstituto[,3])) / as.numeric(as.character(dadosporInstituto[,6])))) / (4*(as.numeric(as.character(dadosporInstituto[,3])))-1)))
+
+ICsup=ifelse(LSIC > 1 | LSIC=="NaN" , 1 , LSIC)
+
+dadosporInstituto2 = data.frame(cbind(dadosporInstituto,ICinf,ICsup))
 ```
   
 O gráfico abaixo apresenta uma relação da **proporção de votos contra a greve** com a **proporção de alunos regularmente matriculados que votaram no site "VotaUnicamp"**. Este a seguinte interpretação: Quanto mais alto está o ponto (ou sigla) referente ao instituto, maior é a proporção de alunos que votaram contra a greve no site **VotaUnicamp** e quanto mais este mesmo ponto (sigla) está à direita do gráfico maior a porcentagem de alunos, regularmente matriculados em cursos oferecidos no instituto em questão, que votaram no site **VotaUnicamp**.
 
-```{r GraficoDeDispersão,echo = FALSE}
-#não sei porque o grafico não está sendo plotado, alguem manja? 
+```{r GraficoDeDispersão,echo = FALSE,eval=TRUE}
 library(ggplot2)
-p1 = as.numeric(dadosporInstituto2$naoInstituto)/as.numeric(dadosporInstituto2$totalInstituto)
-p2 = as.numeric(dadosporInstituto2$totalInstituto)/as.numeric(dadosporInstituto2$regularesGrad)
+p1 = as.numeric(as.character(dadosporInstituto2$naoInstituto))/as.numeric(as.character(dadosporInstituto2$totalInstituto))
+px = ifelse(p1=="NaN",0,p1)
+
+p2 = as.numeric(as.character(dadosporInstituto2$totalInstituto))/as.numeric(as.character(dadosporInstituto2$regularesGrad))
+py = ifelse(p2=="NaN",0,p2)
 siglas = as.character(dadosporInstituto2$V1)
-ggplot(dadosporInstituto2, aes(x=p2, y=p1)) +
+ggplot(dadosporInstituto2, aes(x=px, y=py)) +
   geom_point() +
   geom_text(label=siglas) + labs(x = "Proporção de votos em relação ao total de alunos regularmente Matriculados do instituto") + labs(y = "proporção de Votos Contra a greve")
 ```
@@ -445,20 +461,31 @@ O gráfico abaixo é uma representação gráfica dos intervalos de confiança o
 
 ```{r representaçãoGraficaDosICS,echo=FALSE,eval=TRUE}
 library(ggplot2)
-graf<- ggplot(dadosporInstituto2, aes(x = as.numeric(dadosporInstituto2[,1]), y = as.character(dadosporInstituto2[,5]))) +
+dadosx = as.character(dadosporInstituto2[,1])
+xses = ifelse(dadosx=="NaN",0,dadosx)
+dadosy = as.numeric(as.character(dadosporInstituto2[,5]))
+yses = ifelse(dadosy=="NaN",0,dadosy)
+maximo = as.numeric(as.character(dadosporInstituto2[,8]))
+M = ifelse(maximo=="NaN",1,maximo)
+minimo = as.numeric(as.character(dadosporInstituto2[,7]))
+m = ifelse(minimo=="NaN",0,minimo)
+graf<- ggplot(dadosporInstituto2, aes(x = xses), y = yses )) +
   geom_point(size = 1) +
-  geom_errorbar(aes(ymax = dadosporInstituto2[,8], ymin = dadosporInstituto2[,7])) + xlab("Proporção de Votos Contra a Greve") + ylab("Institutos")
+  geom_errorbar(aes(ymax = M, ymin = m )) + xlab("Institutos") + ylab("Proporção de Votos Contra a Greve")
 graf
 ```
 
 ```{r NnecessarioIC,echo=FALSE, results="hide"}
 tamanhoIC = 0.1
-N = (1/4) *(2*qnorm(0.975)/tamanhoIC)^2
+regulares=as.numeric(as.character(dadosporInstituto2[,6]))
+regulares2=ifelse(regulares=="NaN",0,regulares)
+
+N = regulares2/(4*(qnorm(0.975)/tamanhoIC)^2*(regulares2-1)+1)
 Nnecessario = ceiling(N)
 ```
   
 ```{r tabelaAmostraNecessaria,echo=FALSE}
-tabelaNnecessario = data.frame(Instituto = dadosporInstituto2[,1],Total_Instituto = dadosporInstituto2[,3],Tamanho_de_Amostra_Necessario = Nnecessario,votosFaltantes = (Nnecessario - as.numeric(dadosporInstituto2[,3])))
+tabelaNnecessario = data.frame(Instituto = dadosporInstituto2[,1],Total_Instituto = dadosporInstituto2[,3],Tamanho_de_Amostra_Necessario = Nnecessario,votosFaltantes = (Nnecessario - as.numeric(as.character(dadosporInstituto2[,3]))))
 ```
   
 As colunas da tabela abaixo representam respectivamente: "Sigla do instituto", "quantidade de votos contra a greve", "quantidade total de votos","quantidade de abstenções","proporção de votos contra a greve","quantidade de alunos regularmente matriculados em cursos oferecidos no instituto", "o limite inferior do Intervalo de confiança com 95% de significancia" e "o limite superior do Intervalo de confiança com 95% de significancia".
@@ -525,3 +552,23 @@ ggmap(myMap, extent = "device",ylab = "Latitude", xlab = "Longitude")+
  geom_point(aes(x = lon, y = lat,colour = Proporcao, size= Proporcao),
  data = data, alpha = .5)+ scale_colour_continuous(low = "red", high = "blue", space = "Lab", guide = "colorbar") + geom_label_repel(data = ends, aes(x = lon, y = lat, label = instituto),  fill = "white") + labs(title="Proporção de votos contra ")
 ```
+
+### Bootstrap
+
+Uma análise a ser feita é através da técnica de Bootstrap, ou seja, vai=se 
+reamostrar os dados que tivemos e buscar as respostas de interesse por meio da 
+simulação. O que se fará a seguir é uma reamostragem para obtenção de que  a 
+proporção de votos negativos é significativa.
+
+```{r bootstrap, echo=FALSE, warning=FALSE}
+library(boot)
+
+resposta = boot(mytbl, function(dd,i)  sum(as.integer(dd[i,]$nao))/sum(as.integer(dd[i,]$total)), R = 10000)
+
+```
+
+Aplicando a técnica de bootstrap obteve-se que `r round((resposta$t0),3)` % dos alunos são contrários a greve.
+
+#### Conclusão
+
+Diante da contextualização do problema proposto, e da forma como ocorre, com extrema discrepância ideológica, tanto pela forma como tem sido gerida pelo movimento estudantil com piquetes em salas de aula, essa pesquisa expõe de diveras formas,como nas estatísticas descritivas por nível qualificativo, de análises por área de estudo e mesmo pela técninca de bootstrap de que há forte rejeição a greve por parte dos alunos. Pode-se dizer que ainda a amostra não pe suficiente para maiores análises e possivelmente pode ser enviesada porque há forte rejeição da parte de quem é a favor da greve relacionada a pesquisa analisada, inclusive campanhas sendo realizadas contra.

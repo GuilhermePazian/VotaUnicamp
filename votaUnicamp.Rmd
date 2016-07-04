@@ -1,10 +1,11 @@
 ---
 title: "Vota Unicamp!"
-author: -Guilherme Pazian      RA:160323
-        -Henrique Capatto      RA:146406
-        -Matheus Gomes         RA:156751
-        -Murilo Salgado Razoli RA:150987
-        -Wellington Tanaka     RA:093259
+author:
+        - Guilherme Pazian      RA:160323
+        - Henrique Capatto      RA:146406
+        - Matheus Gomes         RA:156751
+        - Murilo Salgado Razoli RA:150987
+        - Wellington Tanaka     RA:093259
 runtime: shiny
 output: html_document
 ---
@@ -234,7 +235,6 @@ codigos=na.omit(stack(read.csv2("CodigoCursosPorInstitutos.csv")))
 
 suppressPackageStartupMessages(library(pracma))#usada para comparar strings
 suppressPackageStartupMessages(library(dplyr))#usada para filtrar o data.frame
-library(printr)
 mytblgrad=filter(mytbl,nivel=="Graduacao")#filtragem do data.frame
 mytblgrad$area=0#criação da coluna area
 mytblgrad$total_de_alunos_por_curso=0#criação do total de alunos por curso
@@ -282,12 +282,6 @@ greve estudantil na Universidade Estadual de Campinas.
 ``` {r barras, echo = FALSE, message = FALSE}
 barplot(c(sum(mytbl$sim),sum(mytbl$nao),sum(mytbl$abstencao)),legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylab = "Frequência", main =  "Total de Votos")
 
-```
-
-```{r, eval=FALSE ,echo = FALSE, message=FALSE}
-library(d3heatmap)
-library(RColorBrewer)
-d3heatmap(mytbl[5:7],col=rev(brewer.pal(12,"Paired")),yaxis_width = 200)
 ```
 
 
@@ -365,7 +359,7 @@ Uma suposição de que a proporção de votos é distribuida igualmente entre os
 
 #### Teste e seus resultados
 
-```{r teste_qui_prop,echo=FALSE,message=FALSE}
+```{r teste_qui_prop,echo=FALSE,message=FALSE,warning=FALSE}
 
 prop_humanas=c(sum(Humanas$sim),sum(Humanas$nao),sum(Humanas$abstencao))/sum(Humanas$total)
 
@@ -396,7 +390,7 @@ Temos que o p-valor é aproximadamente de: `r round(p_valor,3)`.
 
 De maneira a identificar melhor a diversidade de opinião dentro do ambiente universitário, podemos também, fazer uma análise das proporções de votos contra a greve de alunos do mesmo instituto. Podemos também analisar a representatividade dos dados apresentados aqui.
 
-```{r Institutos, echo = FALSE}
+```{r Institutos, echo = FALSE,warning=FALSE}
 
 cursosPorInstituto = data.frame(read.csv2("CodigoCursosPorInstitutos.csv",header = TRUE))
 #head(cursosPorInstituto)
@@ -430,14 +424,14 @@ regularesGrad[i] = ifelse(length(filter(alunosMatricPorInst,SIGLA == as.characte
 
 dadosporInstituto = data.frame(cbind(data.InstitutosRei,regularesGrad))
 #head(dadosporInstituto)
-str(dadosporInstituto)
-LIIC = as.numeric(as.character(dadosporInstituto[,5])) - qnorm(.975) * (sqrt((1 - (as.numeric(as.character(dadosporInstituto[,3])) / as.numeric(as.character(dadosporInstituto[,6])))) / (4*(as.numeric(as.character(dadosporInstituto[,3])))-1)))
+#str(dadosporInstituto)
+LIIC = as.numeric(as.character(dadosporInstituto[,5])) - qnorm(.975) * (sqrt(4*as.numeric(as.character(dadosporInstituto[,3]))))^(-1)
 
-ICinf = ifelse(LIIC < 0 | LIIC=="NaN" , 0 , LIIC)
+ICinf = round(ifelse(LIIC < 0 | LIIC=="NaN" , 0 , LIIC),3)
 
-LSIC = as.numeric(as.character(dadosporInstituto[,5])) + qnorm(.975) * (sqrt((1 - (as.numeric(as.character(dadosporInstituto[,3])) / as.numeric(as.character(dadosporInstituto[,6])))) / (4*(as.numeric(as.character(dadosporInstituto[,3])))-1)))
+LSIC = as.numeric(as.character(dadosporInstituto[,5])) + qnorm(.975) * (sqrt(4*as.numeric(as.character(dadosporInstituto[,3]))))^(-1)
 
-ICsup=ifelse(LSIC > 1 | LSIC=="NaN" , 1 , LSIC)
+ICsup=round(ifelse(LSIC > 1 | LSIC=="NaN" , 1 , LSIC),3)
 
 dadosporInstituto2 = data.frame(cbind(dadosporInstituto,ICinf,ICsup))
 ```
@@ -445,12 +439,14 @@ dadosporInstituto2 = data.frame(cbind(dadosporInstituto,ICinf,ICsup))
 O gráfico abaixo apresenta uma relação da **proporção de votos contra a greve** com a **proporção de alunos regularmente matriculados que votaram no site "VotaUnicamp"**. Este a seguinte interpretação: Quanto mais alto está o ponto (ou sigla) referente ao instituto, maior é a proporção de alunos que votaram contra a greve no site **VotaUnicamp** e quanto mais este mesmo ponto (sigla) está à direita do gráfico maior a porcentagem de alunos, regularmente matriculados em cursos oferecidos no instituto em questão, que votaram no site **VotaUnicamp**.
 
 ```{r GraficoDeDispersão,echo = FALSE,eval=TRUE}
-library(ggplot2)
+suppressPackageStartupMessages(library(ggplot2))
+
 p1 = as.numeric(as.character(dadosporInstituto2$naoInstituto))/as.numeric(as.character(dadosporInstituto2$totalInstituto))
-px = ifelse(p1=="NaN",0,p1)
+py = ifelse(p1=="NaN",0,p1)
 
 p2 = as.numeric(as.character(dadosporInstituto2$totalInstituto))/as.numeric(as.character(dadosporInstituto2$regularesGrad))
-py = ifelse(p2=="NaN",0,p2)
+px = ifelse(p2=="NaN",0,p2)
+
 siglas = as.character(dadosporInstituto2$V1)
 ggplot(dadosporInstituto2, aes(x=px, y=py)) +
   geom_point() +
@@ -460,7 +456,8 @@ ggplot(dadosporInstituto2, aes(x=px, y=py)) +
 O gráfico abaixo é uma representação gráfica dos intervalos de confiança obtidos a partir dos dados referentes aos institutos. O ponto central é a proporção de votos contra a greve e as linhas horizontais representam o limite inferior e o limite superior de cada intervalo de confiança. Pode-se interpretar o grafico da seguinte maneira: Quanto mais alto está o ponto central referente ao instituto, maior a proporção de votos contra a greve no instituto, e quanto maior a distância entre as linhas horizontais (superior e inferior) menor a precisão da nossa estimativa. Os intervalos de confiança abaixo, foram confeccionados a partir de um nível de significância de 95%, ou seja, considerando que os alunos que votaram no site VotaUnicamp representam uma amostra aleatoria do total de alunos do instituto, então se tomassemos uma quantidade suficientemente grande de amostras aleatórias e produzirmos Intervalos de confiança (com 95% de significância) com estas, teríamos então, que em média, 95% dos Intervalos de confiança irão conter a verdadeira proporção de interesse (a populacional, referente a todos os alunos do curso).
 
 ```{r representaçãoGraficaDosICS,echo=FALSE,eval=TRUE}
-library(ggplot2)
+suppressPackageStartupMessages(library(ggplot2))
+
 dadosx = as.character(dadosporInstituto2[,1])
 xses = ifelse(dadosx=="NaN",0,dadosx)
 dadosy = as.numeric(as.character(dadosporInstituto2[,5]))
@@ -469,7 +466,7 @@ maximo = as.numeric(as.character(dadosporInstituto2[,8]))
 M = ifelse(maximo=="NaN",1,maximo)
 minimo = as.numeric(as.character(dadosporInstituto2[,7]))
 m = ifelse(minimo=="NaN",0,minimo)
-graf<- ggplot(dadosporInstituto2, aes(x = xses), y = yses )) +
+graf<- ggplot(dadosporInstituto2, aes(x = xses, y = yses )) +
   geom_point(size = 1) +
   geom_errorbar(aes(ymax = M, ymin = m )) + xlab("Institutos") + ylab("Proporção de Votos Contra a Greve")
 graf
@@ -477,11 +474,11 @@ graf
 
 ```{r NnecessarioIC,echo=FALSE, results="hide"}
 tamanhoIC = 0.1
-regulares=as.numeric(as.character(dadosporInstituto2[,6]))
+regulares= dadosporInstituto2[,6]
 regulares2=ifelse(regulares=="NaN",0,regulares)
 
-N = regulares2/(4*(qnorm(0.975)/tamanhoIC)^2*(regulares2-1)+1)
-Nnecessario = ceiling(N)
+N = regulares2/(4*(tamanhoIC/qnorm(0.975))^2*(regulares2-1)+1)
+Nnecessario = as.numeric(ceiling(as.numeric(as.character(N))))
 ```
   
 ```{r tabelaAmostraNecessaria,echo=FALSE}
@@ -490,8 +487,8 @@ tabelaNnecessario = data.frame(Instituto = dadosporInstituto2[,1],Total_Institut
   
 As colunas da tabela abaixo representam respectivamente: "Sigla do instituto", "quantidade de votos contra a greve", "quantidade total de votos","quantidade de abstenções","proporção de votos contra a greve","quantidade de alunos regularmente matriculados em cursos oferecidos no instituto", "o limite inferior do Intervalo de confiança com 95% de significancia" e "o limite superior do Intervalo de confiança com 95% de significancia".
   
-```{r tabelaInstituto,echo=FALSE}
-library(DT)
+```{r tabelaInstituto,echo=FALSE,warning=FALSE,error=FALSE}
+suppressPackageStartupMessages(library(DT))
 datatable(data=dadosporInstituto2,class = 'cell-border stripe')
 ```
   
@@ -499,8 +496,8 @@ datatable(data=dadosporInstituto2,class = 'cell-border stripe')
 A fim de conseguirmos Intervalos de confiança para proporção de votos "não" por Instituto de tamanho `r tamanhoIC` com coeficientes de confiança de 95%, devemos ter `r Nnecessario` votos para cada Instituto. A tabela abaixo mostra o total de votos de cada Instituto, a quantidade mínima nescessária para atingir o IC desejado e a quantidade de votos faltantes para atingir essa quantidade para cada Instituto.
   
   
-```{r tabela,echo=FALSE}
-library(DT)
+```{r tabela,echo=FALSE,message=FALSE,warning=FALSE,error=FALSE}
+suppressPackageStartupMessages(library(DT))
 datatable(data=tabelaNnecessario,class = 'cell-border stripe')
 ```
 
@@ -526,18 +523,19 @@ renderTable(mytbl[as.integer(input$curso),5:10])
 renderPlot(barplot(as.integer(mytbl[as.integer(input$curso),5:7]),main=paste(mytbl[as.integer(input$curso),1],mytbl[as.integer(input$curso),2],mytbl[as.integer(input$curso),3],sep = " - "),ylab="Frequência",legend=colnames(mytbl[5:7]),col=c("gold1","darkorchid2","antiquewhite2"),ylim=c(0,max(as.integer(mytbl[as.integer(input$curso),5:7])))))
 options=list(width="100%", height="100%")
 ```
-
-
-```{r enderecos, echo = FALSE, message = FALSE}
+  
+  O mapa abaixo apresenta as proporções de votos contra a greve por instituto. O tamanho dos circulos, assim como a intensidade da cor dentro dos circulos, são diretamente proporcionais as proporções referentes ao instituto em que os cirulos estão representados no mapa.
+  
+```{r enderecos, echo = FALSE, message = FALSE, warning=FALSE}
 ends = read.table('institutos.tab', sep='\t', header=TRUE)
 teste = data.Instituto[-c(1,2,25,14,13,14,11),]
 
  v <- c(1,1,0.909,0.857,0.588,0.83 ,0.875, 0.684 ,0.636, 0.091, 0.565, 0.72,  0.579,0.222, 0.235, 0.444, 0.25,  0.769, 0.606)
 
 
-library(ggrepel)
-library(ggmap)
-library(ggplot2)
+suppressPackageStartupMessages(library(ggrepel))
+suppressPackageStartupMessages(library(ggmap))
+suppressPackageStartupMessages(library(ggplot2))
 
 data <- data.frame(lon=ends$lon, lat=ends$lat , Proporcao = v)
 
@@ -561,14 +559,14 @@ simulação. O que se fará a seguir é uma reamostragem para obtenção de que 
 proporção de votos negativos é significativa.
 
 ```{r bootstrap, echo=FALSE, warning=FALSE}
-library(boot)
+suppressPackageStartupMessages(library(boot))
 
 resposta = boot(mytbl, function(dd,i)  sum(as.integer(dd[i,]$nao))/sum(as.integer(dd[i,]$total)), R = 10000)
 
 ```
 
-Aplicando a técnica de bootstrap obteve-se que `r round((resposta$t0),3)` % dos alunos são contrários a greve.
+Aplicando a técnica de bootstrap obteve-se que `r round(resposta$t0,3)*100` % dos alunos são contrários a greve.
 
-#### Conclusão
+## Conclusão
 
 Diante da contextualização do problema proposto, e da forma como ocorre, com extrema discrepância ideológica, tanto pela forma como tem sido gerida pelo movimento estudantil com piquetes em salas de aula, essa pesquisa expõe de diveras formas,como nas estatísticas descritivas por nível qualificativo, de análises por área de estudo e mesmo pela técninca de bootstrap de que há forte rejeição a greve por parte dos alunos. Pode-se dizer que ainda a amostra não pe suficiente para maiores análises e possivelmente pode ser enviesada porque há forte rejeição da parte de quem é a favor da greve relacionada a pesquisa analisada, inclusive campanhas sendo realizadas contra.
